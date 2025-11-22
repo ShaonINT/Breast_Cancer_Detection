@@ -26,7 +26,20 @@ A comprehensive machine learning solution for breast cancer detection with a use
 - [License](#-license)
 
 ---
+<div align="center">
+  <a href="https://breast-cancer-detection-34ui.onrender.com/">
+    <img src="https://img.shields.io/badge/DEMO-Live_App-FF4B4B?style=for-the-badge&logo=appveyor" alt="Live Demo" />
+  </a>
+  
+  <br />
+  <br />
 
+  <img src="https://github.com/ShaonINT/Breast_Cancer_Detection/blob/main/static/screenshot.png?raw=true" alt="Breast Cancer Detection Interface" width="800" style="border-radius: 10px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);" />
+
+  <p><em>Interactive Interface demonstrating Probability Scoring and Feature Explanation</em></p>
+</div>
+
+---
 ## ✨ Features
 
 ### 🎯 Core Features
