@@ -75,8 +75,77 @@
         .form-group label {
             font-weight: 600;
             color: #333;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 16px;
+            font-size: 11px;
+            cursor: help;
+            font-weight: bold;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .help-text {
+            font-size: 0.75em;
+            color: #666;
+            margin-top: 4px;
+            font-style: italic;
+            line-height: 1.3;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 8px 10px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85em;
+            font-style: normal;
+            line-height: 1.4;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
         }
 
         .form-group input {
@@ -229,6 +298,43 @@
             .content {
                 padding: 20px;
             }
+
+            .tooltip .tooltiptext {
+                width: 200px;
+                margin-left: -100px;
+                font-size: 0.8em;
+            }
+        }
+
+        /* Info section at top */
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-box p {
+            color: #555;
+            line-height: 1.6;
+            margin: 5px 0;
+        }
+
+        .info-box ul {
+            margin: 10px 0;
+            padding-left: 20px;
+            color: #555;
+        }
+
+        .info-box li {
+            margin: 5px 0;
         }
     </style>
 </head>
@@ -240,49 +346,136 @@
         </div>
 
         <div class="content">
+            <div class="info-box">
+                <h3>📋 Understanding the Measurements</h3>
+                <p><strong>What are these measurements?</strong> These values come from analyzing cell nuclei images from breast tissue samples. Each measurement describes different aspects of the cell's size, shape, and texture.</p>
+                <p><strong>How to use:</strong></p>
+                <ul>
+                    <li>Hover over the <strong>?</strong> icon next to any field to see what it means</li>
+                    <li>Use "Load Random Example" to see sample data</li>
+                    <li>Enter your diagnostic measurements and click "Get Prediction"</li>
+                </ul>
+                <p><strong>Terminology Guide:</strong></p>
+                <ul>
+                    <li><strong>Mean</strong> = Average value across all cells</li>
+                    <li><strong>SE (Standard Error)</strong> = How much the values vary</li>
+                    <li><strong>Worst</strong> = Most abnormal/severe value found</li>
+                </ul>
+            </div>
+
             <form id="predictionForm">
                 <!-- Mean Features -->
                 <div class="form-section">
-                    <h2 class="section-title">Mean Features</h2>
+                    <h2 class="section-title">Mean Features <span style="font-size: 0.7em; font-weight: normal; color: #666;">(Average measurements across all cells)</span></h2>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="radius_mean">Radius Mean</label>
+                            <label for="radius_mean">
+                                Radius Mean
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Average distance from center to points on the perimeter of the cell nucleus (in micrometers). Larger values may indicate abnormalities.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Average radius of cell nuclei</span>
                             <input type="number" id="radius_mean" name="radius_mean" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label for="texture_mean">Texture Mean</label>
+                            <label for="texture_mean">
+                                Texture Mean
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard deviation of gray-scale values in the image. Measures variation in cell appearance. Higher values indicate more variation.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in cell appearance</span>
                             <input type="number" id="texture_mean" name="texture_mean" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label for="perimeter_mean">Perimeter Mean</label>
+                            <label for="perimeter_mean">
+                                Perimeter Mean
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Average distance around the boundary of the cell nucleus (in micrometers). Irregular shapes have larger perimeters.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Average perimeter of cell nuclei</span>
                             <input type="number" id="perimeter_mean" name="perimeter_mean" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label for="area_mean">Area Mean</label>
+                            <label for="area_mean">
+                                Area Mean
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Average area of the cell nucleus (in square micrometers). Larger areas may indicate cancerous cells.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Average area of cell nuclei</span>
                             <input type="number" id="area_mean" name="area_mean" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label for="smoothness_mean">Smoothness Mean</label>
+                            <label for="smoothness_mean">
+                                Smoothness Mean
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Local variation in radius lengths. Measures how smooth the cell boundary is. Lower values = smoother boundaries.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Smoothness of cell boundaries</span>
                             <input type="number" id="smoothness_mean" name="smoothness_mean" step="0.00001" required>
                         </div>
                         <div class="form-group">
-                            <label for="compactness_mean">Compactness Mean</label>
+                            <label for="compactness_mean">
+                                Compactness Mean
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Perimeter² / (Area - 1). Measures how compact the cell shape is. Values closer to 1 = more circular (normal). Higher values = less compact (irregular).</span>
+                                </span>
+                            </label>
+                            <span class="help-text">How compact/circular the cell shape is</span>
                             <input type="number" id="compactness_mean" name="compactness_mean" step="0.00001" required>
                         </div>
                         <div class="form-group">
-                            <label for="concavity_mean">Concavity Mean</label>
+                            <label for="concavity_mean">
+                                Concavity Mean
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Severity of concave portions of the contour (indented areas). Higher values indicate more indentations, which may be abnormal.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Severity of indentations in the cell</span>
                             <input type="number" id="concavity_mean" name="concavity_mean" step="0.00001" required>
                         </div>
                         <div class="form-group">
-                            <label for="concave_points_mean">Concave Points Mean</label>
+                            <label for="concave_points_mean">
+                                Concave Points Mean
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Number of concave portions of the contour (indented points). More indentations may indicate abnormalities.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Number of indented points in the cell</span>
                             <input type="number" id="concave_points_mean" name="concave_points_mean" step="0.00001" required>
                         </div>
                         <div class="form-group">
-                            <label for="symmetry_mean">Symmetry Mean</label>
+                            <label for="symmetry_mean">
+                                Symmetry Mean
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">How symmetrical the cell nucleus is. Normal cells are typically more symmetrical. Asymmetry may indicate abnormalities.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">How symmetrical the cell shape is</span>
                             <input type="number" id="symmetry_mean" name="symmetry_mean" step="0.00001" required>
                         </div>
                         <div class="form-group">
-                            <label for="fractal_dimension_mean">Fractal Dimension Mean</label>
+                            <label for="fractal_dimension_mean">
+                                Fractal Dimension Mean
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">A measure of complexity of the cell boundary ("coastline approximation"). More complex boundaries have higher fractal dimensions.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Complexity of the cell boundary</span>
                             <input type="number" id="fractal_dimension_mean" name="fractal_dimension_mean" step="0.00001" required>
                         </div>
                     </div>
@@ -290,46 +483,116 @@
 
                 <!-- Standard Error Features -->
                 <div class="form-section">
-                    <h2 class="section-title">Standard Error Features</h2>
+                    <h2 class="section-title">Standard Error Features <span style="font-size: 0.7em; font-weight: normal; color: #666;">(Variation/uncertainty in measurements)</span></h2>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="radius_se">Radius SE</label>
+                            <label for="radius_se">
+                                Radius SE
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard error (variation) in radius measurements. Shows how much the radius values vary across cells. Higher values = more variation.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in radius measurements</span>
                             <input type="number" id="radius_se" name="radius_se" step="0.001" required>
                         </div>
                         <div class="form-group">
-                            <label for="texture_se">Texture SE</label>
+                            <label for="texture_se">
+                                Texture SE
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard error in texture (gray-scale variation) measurements. Indicates consistency in cell appearance across the sample.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in texture measurements</span>
                             <input type="number" id="texture_se" name="texture_se" step="0.0001" required>
                         </div>
                         <div class="form-group">
-                            <label for="perimeter_se">Perimeter SE</label>
+                            <label for="perimeter_se">
+                                Perimeter SE
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard error in perimeter measurements. Shows how much cell perimeters vary. More variation may indicate abnormal cells.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in perimeter measurements</span>
                             <input type="number" id="perimeter_se" name="perimeter_se" step="0.001" required>
                         </div>
                         <div class="form-group">
-                            <label for="area_se">Area SE</label>
+                            <label for="area_se">
+                                Area SE
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard error in area measurements. Measures consistency of cell sizes. Large variations may indicate abnormalities.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in area measurements</span>
                             <input type="number" id="area_se" name="area_se" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label for="smoothness_se">Smoothness SE</label>
+                            <label for="smoothness_se">
+                                Smoothness SE
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard error in smoothness measurements. Indicates how consistently smooth the cell boundaries are across the sample.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in smoothness measurements</span>
                             <input type="number" id="smoothness_se" name="smoothness_se" step="0.000001" required>
                         </div>
                         <div class="form-group">
-                            <label for="compactness_se">Compactness SE</label>
+                            <label for="compactness_se">
+                                Compactness SE
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard error in compactness measurements. Shows how consistently compact (round) the cells are.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in compactness measurements</span>
                             <input type="number" id="compactness_se" name="compactness_se" step="0.000001" required>
                         </div>
                         <div class="form-group">
-                            <label for="concavity_se">Concavity SE</label>
+                            <label for="concavity_se">
+                                Concavity SE
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard error in concavity (indentation) measurements. Indicates consistency of indentations across cells.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in concavity measurements</span>
                             <input type="number" id="concavity_se" name="concavity_se" step="0.000001" required>
                         </div>
                         <div class="form-group">
-                            <label for="concave_points_se">Concave Points SE</label>
+                            <label for="concave_points_se">
+                                Concave Points SE
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard error in number of concave points (indentations). Shows consistency in the number of indentations.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in concave points measurements</span>
                             <input type="number" id="concave_points_se" name="concave_points_se" step="0.000001" required>
                         </div>
                         <div class="form-group">
-                            <label for="symmetry_se">Symmetry SE</label>
+                            <label for="symmetry_se">
+                                Symmetry SE
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard error in symmetry measurements. Indicates how consistently symmetrical the cells are.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in symmetry measurements</span>
                             <input type="number" id="symmetry_se" name="symmetry_se" step="0.000001" required>
                         </div>
                         <div class="form-group">
-                            <label for="fractal_dimension_se">Fractal Dimension SE</label>
+                            <label for="fractal_dimension_se">
+                                Fractal Dimension SE
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Standard error in fractal dimension (boundary complexity) measurements. Shows consistency in boundary complexity.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Variation in fractal dimension measurements</span>
                             <input type="number" id="fractal_dimension_se" name="fractal_dimension_se" step="0.000001" required>
                         </div>
                     </div>
@@ -337,46 +600,116 @@
 
                 <!-- Worst Features -->
                 <div class="form-section">
-                    <h2 class="section-title">Worst Features</h2>
+                    <h2 class="section-title">Worst Features <span style="font-size: 0.7em; font-weight: normal; color: #666;">(Most abnormal/severe measurements)</span></h2>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="radius_worst">Radius Worst</label>
+                            <label for="radius_worst">
+                                Radius Worst
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Largest radius measurement found. The "worst case" value, indicating the most abnormal cell size in the sample.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Largest radius measurement</span>
                             <input type="number" id="radius_worst" name="radius_worst" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label for="texture_worst">Texture Worst</label>
+                            <label for="texture_worst">
+                                Texture Worst
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Highest texture variation found. The most abnormal variation in cell appearance in the sample.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Highest texture variation</span>
                             <input type="number" id="texture_worst" name="texture_worst" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label for="perimeter_worst">Perimeter Worst</label>
+                            <label for="perimeter_worst">
+                                Perimeter Worst
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Largest perimeter measurement. Indicates the most irregularly shaped cell found in the sample.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Largest perimeter measurement</span>
                             <input type="number" id="perimeter_worst" name="perimeter_worst" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label for="area_worst">Area Worst</label>
+                            <label for="area_worst">
+                                Area Worst
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Largest area measurement. The biggest cell found in the sample, which may indicate abnormalities.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Largest area measurement</span>
                             <input type="number" id="area_worst" name="area_worst" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label for="smoothness_worst">Smoothness Worst</label>
+                            <label for="smoothness_worst">
+                                Smoothness Worst
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Least smooth boundary found. Indicates the most irregular cell boundary in the sample.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Least smooth boundary found</span>
                             <input type="number" id="smoothness_worst" name="smoothness_worst" step="0.00001" required>
                         </div>
                         <div class="form-group">
-                            <label for="compactness_worst">Compactness Worst</label>
+                            <label for="compactness_worst">
+                                Compactness Worst
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Least compact (most irregular) cell shape found. The most non-circular cell in the sample.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Least compact shape found</span>
                             <input type="number" id="compactness_worst" name="compactness_worst" step="0.00001" required>
                         </div>
                         <div class="form-group">
-                            <label for="concavity_worst">Concavity Worst</label>
+                            <label for="concavity_worst">
+                                Concavity Worst
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Most severe indentation found. The deepest indentations in any cell, which may indicate abnormalities.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Most severe indentations found</span>
                             <input type="number" id="concavity_worst" name="concavity_worst" step="0.00001" required>
                         </div>
                         <div class="form-group">
-                            <label for="concave_points_worst">Concave Points Worst</label>
+                            <label for="concave_points_worst">
+                                Concave Points Worst
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Maximum number of indentations found. The cell with the most indentations in the sample.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Maximum indentations found</span>
                             <input type="number" id="concave_points_worst" name="concave_points_worst" step="0.00001" required>
                         </div>
                         <div class="form-group">
-                            <label for="symmetry_worst">Symmetry Worst</label>
+                            <label for="symmetry_worst">
+                                Symmetry Worst
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Least symmetrical cell found. The most asymmetrical cell in the sample, which may indicate abnormalities.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Least symmetrical cell found</span>
                             <input type="number" id="symmetry_worst" name="symmetry_worst" step="0.00001" required>
                         </div>
                         <div class="form-group">
-                            <label for="fractal_dimension_worst">Fractal Dimension Worst</label>
+                            <label for="fractal_dimension_worst">
+                                Fractal Dimension Worst
+                                <span class="tooltip">
+                                    <span class="info-icon">?</span>
+                                    <span class="tooltiptext">Most complex boundary found. The cell with the most irregular, complex boundary structure in the sample.</span>
+                                </span>
+                            </label>
+                            <span class="help-text">Most complex boundary found</span>
                             <input type="number" id="fractal_dimension_worst" name="fractal_dimension_worst" step="0.00001" required>
                         </div>
                     </div>
