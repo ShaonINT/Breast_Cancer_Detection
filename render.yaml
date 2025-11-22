@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: breast-cancer-detection
+    env: python
+    region: oregon
+    buildCommand: pip install -r requirements.txt && python train_models.py
+    startCommand: python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+    healthCheckPath: /health
+
