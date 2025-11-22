@@ -609,6 +609,22 @@
             }
         ];
 
+        // Round values to match form input precision
+        function roundToPrecision(value, inputElement) {
+            if (!inputElement) return value;
+            
+            const step = inputElement.getAttribute('step');
+            if (!step) return value;
+            
+            // Extract decimal places from step (e.g., "0.001" = 3 decimal places)
+            const stepStr = step.toString();
+            if (stepStr.includes('.')) {
+                const decimalPlaces = stepStr.split('.')[1].length;
+                return Math.round(value * Math.pow(10, decimalPlaces)) / Math.pow(10, decimalPlaces);
+            }
+            return value;
+        }
+
         // Load random example data - try fetching from API first, fallback to local examples
         async function loadRandomExample() {
             try {
@@ -621,7 +637,9 @@
                     for (const [key, value] of Object.entries(exampleData)) {
                         const input = document.getElementById(key);
                         if (input) {
-                            input.value = value;
+                            // Round to match input step precision
+                            const roundedValue = roundToPrecision(value, input);
+                            input.value = roundedValue;
                         }
                     }
                     
@@ -631,14 +649,14 @@
                     return;
                 }
             } catch (error) {
-                console.log('API example not available, using local examples');
+                console.log('API example not available, using local examples:', error);
             }
             
             // Fallback to local examples if API fails
             const randomIndex = Math.floor(Math.random() * examples.length);
             const exampleData = examples[randomIndex];
 
-            // Fill the form with the random example
+            // Fill the form with the random example (values already have correct precision)
             for (const [key, value] of Object.entries(exampleData)) {
                 const input = document.getElementById(key);
                 if (input) {

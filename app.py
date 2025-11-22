@@ -216,9 +216,45 @@ async def get_random_example():
     """
     Get a random example from the dataset.
     Returns a random sample that can be used for testing predictions.
+    Values are rounded to match the precision requirements of the form fields.
     """
     import random
     import pandas as pd
+    
+    # Define precision for each field based on form input step attributes
+    # Format: {field_name: decimal_places}
+    field_precision = {
+        'radius_mean': 2,
+        'texture_mean': 2,
+        'perimeter_mean': 1,
+        'area_mean': 1,
+        'smoothness_mean': 5,
+        'compactness_mean': 5,
+        'concavity_mean': 4,
+        'concave_points_mean': 5,
+        'symmetry_mean': 5,
+        'fractal_dimension_mean': 5,
+        'radius_se': 3,
+        'texture_se': 4,
+        'perimeter_se': 3,
+        'area_se': 2,
+        'smoothness_se': 6,
+        'compactness_se': 5,
+        'concavity_se': 5,
+        'concave_points_se': 5,
+        'symmetry_se': 5,
+        'fractal_dimension_se': 6,
+        'radius_worst': 2,
+        'texture_worst': 2,
+        'perimeter_worst': 1,
+        'area_worst': 1,
+        'smoothness_worst': 4,
+        'compactness_worst': 4,
+        'concavity_worst': 4,
+        'concave_points_worst': 4,
+        'symmetry_worst': 4,
+        'fractal_dimension_worst': 5
+    }
     
     try:
         # Load dataset
@@ -239,12 +275,19 @@ async def get_random_example():
         # Get a random row
         random_row = df.sample(n=1).iloc[0]
         
-        # Convert to dictionary with proper naming (Pydantic format)
+        # Convert to dictionary with proper naming and precision
         example_dict = {}
         for col in df.columns:
             # Convert CSV column names to Pydantic field names
             pydantic_name = col.replace(' ', '_')
-            example_dict[pydantic_name] = float(random_row[col])
+            value = float(random_row[col])
+            
+            # Round to appropriate precision
+            if pydantic_name in field_precision:
+                decimal_places = field_precision[pydantic_name]
+                value = round(value, decimal_places)
+            
+            example_dict[pydantic_name] = value
         
         return example_dict
     
