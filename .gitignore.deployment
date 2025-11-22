@@ -1,0 +1,18 @@
+# Alternative .gitignore for deployment
+# If you want to commit model files to your repository (for easier deployment),
+# comment out the model file lines in .gitignore or use this file
+
+# Keep model files for deployment
+# *.pkl
+# best_model.pkl
+# scaler.pkl
+# model_metadata.pkl
+
+# But still ignore:
+*.log
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+

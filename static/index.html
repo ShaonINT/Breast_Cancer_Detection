@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breast Cancer Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .form-group input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .result-section {
+            margin-top: 40px;
+            display: none;
+        }
+
+        .result-box {
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-box.malignant {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+
+        .result-box.benign {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+            color: white;
+        }
+
+        .result-label {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-details {
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        .result-details div {
+            margin: 10px 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Breast Cancer Detection</h1>
+            <p>Enter the diagnostic measurements below to get a prediction</p>
+        </div>
+
+        <div class="content">
+            <form id="predictionForm">
+                <!-- Mean Features -->
+                <div class="form-section">
+                    <h2 class="section-title">Mean Features</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="radius_mean">Radius Mean</label>
+                            <input type="number" id="radius_mean" name="radius_mean" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="texture_mean">Texture Mean</label>
+                            <input type="number" id="texture_mean" name="texture_mean" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="perimeter_mean">Perimeter Mean</label>
+                            <input type="number" id="perimeter_mean" name="perimeter_mean" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="area_mean">Area Mean</label>
+                            <input type="number" id="area_mean" name="area_mean" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="smoothness_mean">Smoothness Mean</label>
+                            <input type="number" id="smoothness_mean" name="smoothness_mean" step="0.00001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="compactness_mean">Compactness Mean</label>
+                            <input type="number" id="compactness_mean" name="compactness_mean" step="0.00001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="concavity_mean">Concavity Mean</label>
+                            <input type="number" id="concavity_mean" name="concavity_mean" step="0.00001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="concave_points_mean">Concave Points Mean</label>
+                            <input type="number" id="concave_points_mean" name="concave_points_mean" step="0.00001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="symmetry_mean">Symmetry Mean</label>
+                            <input type="number" id="symmetry_mean" name="symmetry_mean" step="0.00001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fractal_dimension_mean">Fractal Dimension Mean</label>
+                            <input type="number" id="fractal_dimension_mean" name="fractal_dimension_mean" step="0.00001" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Standard Error Features -->
+                <div class="form-section">
+                    <h2 class="section-title">Standard Error Features</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="radius_se">Radius SE</label>
+                            <input type="number" id="radius_se" name="radius_se" step="0.001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="texture_se">Texture SE</label>
+                            <input type="number" id="texture_se" name="texture_se" step="0.0001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="perimeter_se">Perimeter SE</label>
+                            <input type="number" id="perimeter_se" name="perimeter_se" step="0.001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="area_se">Area SE</label>
+                            <input type="number" id="area_se" name="area_se" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="smoothness_se">Smoothness SE</label>
+                            <input type="number" id="smoothness_se" name="smoothness_se" step="0.000001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="compactness_se">Compactness SE</label>
+                            <input type="number" id="compactness_se" name="compactness_se" step="0.000001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="concavity_se">Concavity SE</label>
+                            <input type="number" id="concavity_se" name="concavity_se" step="0.000001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="concave_points_se">Concave Points SE</label>
+                            <input type="number" id="concave_points_se" name="concave_points_se" step="0.000001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="symmetry_se">Symmetry SE</label>
+                            <input type="number" id="symmetry_se" name="symmetry_se" step="0.000001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fractal_dimension_se">Fractal Dimension SE</label>
+                            <input type="number" id="fractal_dimension_se" name="fractal_dimension_se" step="0.000001" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Worst Features -->
+                <div class="form-section">
+                    <h2 class="section-title">Worst Features</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="radius_worst">Radius Worst</label>
+                            <input type="number" id="radius_worst" name="radius_worst" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="texture_worst">Texture Worst</label>
+                            <input type="number" id="texture_worst" name="texture_worst" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="perimeter_worst">Perimeter Worst</label>
+                            <input type="number" id="perimeter_worst" name="perimeter_worst" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="area_worst">Area Worst</label>
+                            <input type="number" id="area_worst" name="area_worst" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="smoothness_worst">Smoothness Worst</label>
+                            <input type="number" id="smoothness_worst" name="smoothness_worst" step="0.00001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="compactness_worst">Compactness Worst</label>
+                            <input type="number" id="compactness_worst" name="compactness_worst" step="0.00001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="concavity_worst">Concavity Worst</label>
+                            <input type="number" id="concavity_worst" name="concavity_worst" step="0.00001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="concave_points_worst">Concave Points Worst</label>
+                            <input type="number" id="concave_points_worst" name="concave_points_worst" step="0.00001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="symmetry_worst">Symmetry Worst</label>
+                            <input type="number" id="symmetry_worst" name="symmetry_worst" step="0.00001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fractal_dimension_worst">Fractal Dimension Worst</label>
+                            <input type="number" id="fractal_dimension_worst" name="fractal_dimension_worst" step="0.00001" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button type="submit" class="btn btn-primary">Get Prediction</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadExample()">Load Example</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
+                </div>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 20px; font-size: 1.1em;">Processing your data...</p>
+            </div>
+
+            <div class="error" id="error"></div>
+
+            <div class="result-section" id="resultSection">
+                <div class="result-box" id="resultBox">
+                    <div class="result-label">Prediction Result</div>
+                    <div class="result-value" id="resultValue"></div>
+                    <div class="result-details" id="resultDetails"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load example data
+        function loadExample() {
+            const exampleData = {
+                radius_mean: 17.99,
+                texture_mean: 10.38,
+                perimeter_mean: 122.8,
+                area_mean: 1001.0,
+                smoothness_mean: 0.1184,
+                compactness_mean: 0.2776,
+                concavity_mean: 0.3001,
+                concave_points_mean: 0.1471,
+                symmetry_mean: 0.2419,
+                fractal_dimension_mean: 0.07871,
+                radius_se: 1.095,
+                texture_se: 0.9053,
+                perimeter_se: 8.589,
+                area_se: 153.4,
+                smoothness_se: 0.006399,
+                compactness_se: 0.04904,
+                concavity_se: 0.05373,
+                concave_points_se: 0.01587,
+                symmetry_se: 0.03003,
+                fractal_dimension_se: 0.006193,
+                radius_worst: 25.38,
+                texture_worst: 17.33,
+                perimeter_worst: 184.6,
+                area_worst: 2019.0,
+                smoothness_worst: 0.1622,
+                compactness_worst: 0.6656,
+                concavity_worst: 0.7119,
+                concave_points_worst: 0.2654,
+                symmetry_worst: 0.4601,
+                fractal_dimension_worst: 0.1189
+            };
+
+            for (const [key, value] of Object.entries(exampleData)) {
+                const input = document.getElementById(key);
+                if (input) {
+                    input.value = value;
+                }
+            }
+        }
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('predictionForm').reset();
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('error').classList.remove('show');
+        }
+
+        // Handle form submission
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Hide previous results
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('error').classList.remove('show');
+            document.getElementById('loading').classList.add('show');
+
+            // Get form data
+            const formData = new FormData(e.target);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = parseFloat(value);
+            });
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.detail || 'Prediction failed');
+                }
+
+                // Hide loading
+                document.getElementById('loading').classList.remove('show');
+
+                // Display result
+                const resultBox = document.getElementById('resultBox');
+                const resultValue = document.getElementById('resultValue');
+                const resultDetails = document.getElementById('resultDetails');
+
+                // Extract M or B from prediction
+                const isMalignant = result.prediction.includes('Malignant');
+                const predictionLetter = isMalignant ? 'M' : 'B';
+                const predictionText = isMalignant ? 'Malignant (M)' : 'Benign (B)';
+
+                // Set result box style
+                resultBox.className = `result-box ${isMalignant ? 'malignant' : 'benign'}`;
+                resultValue.textContent = predictionLetter;
+
+                // Set details
+                const probability = (result.probability * 100).toFixed(2);
+                const confidence = result.confidence;
+
+                resultDetails.innerHTML = `
+                    <div><strong>Diagnosis:</strong> ${predictionText}</div>
+                    <div><strong>Malignant Probability:</strong> ${probability}%</div>
+                    <div><strong>Confidence:</strong> ${confidence}</div>
+                `;
+
+                // Show result section
+                document.getElementById('resultSection').style.display = 'block';
+                document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            } catch (error) {
+                document.getElementById('loading').classList.remove('show');
+                const errorDiv = document.getElementById('error');
+                errorDiv.textContent = `Error: ${error.message}`;
+                errorDiv.classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>
+

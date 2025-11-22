@@ -40,6 +40,13 @@ class ModelComparison:
         if 'id' in df.columns:
             df = df.drop('id', axis=1)
         
+        # Drop unnamed/empty columns (common in CSV files)
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+        
+        # Normalize feature names: replace spaces with underscores
+        # This fixes issues with LightGBM and other models that don't support spaces in feature names
+        df.columns = [col.replace(' ', '_') for col in df.columns]
+        
         # Encode target variable: M=Malignant (1), B=Benign (0)
         df['diagnosis'] = self.label_encoder.fit_transform(df['diagnosis'])
         
@@ -52,9 +59,23 @@ class ModelComparison:
             X, y, test_size=0.2, random_state=42, stratify=y
         )
         
+        # Check for NaN values and fill them if any exist
+        if self.X_train.isnull().sum().sum() > 0:
+            print(f"Warning: Found {self.X_train.isnull().sum().sum()} NaN values in training data. Filling with mean.")
+            self.X_train = self.X_train.fillna(self.X_train.mean())
+        if self.X_test.isnull().sum().sum() > 0:
+            print(f"Warning: Found {self.X_test.isnull().sum().sum()} NaN values in test data. Filling with mean.")
+            self.X_test = self.X_test.fillna(self.X_train.mean())
+        
         # Scale features
         self.X_train_scaled = self.scaler.fit_transform(self.X_train)
         self.X_test_scaled = self.scaler.transform(self.X_test)
+        
+        # Ensure no NaN values after scaling
+        if np.isnan(self.X_train_scaled).sum() > 0 or np.isnan(self.X_test_scaled).sum() > 0:
+            print(f"Warning: NaN values found after scaling. Replacing with 0.")
+            self.X_train_scaled = np.nan_to_num(self.X_train_scaled, nan=0.0)
+            self.X_test_scaled = np.nan_to_num(self.X_test_scaled, nan=0.0)
         
         print(f"Training set size: {self.X_train.shape[0]}")
         print(f"Test set size: {self.X_test.shape[0]}")
@@ -133,6 +154,11 @@ class ModelComparison:
             if model_name in ['SVM', 'Neural Network']:
                 X_train = self.X_train_scaled
                 X_test = self.X_test_scaled
+            elif model_name == 'LightGBM':
+                # LightGBM has issues with special characters in feature names
+                # Convert to numpy arrays to avoid column name issues
+                X_train = self.X_train.values
+                X_test = self.X_test.values
             else:
                 X_train = self.X_train
                 X_test = self.X_test
@@ -150,8 +176,9 @@ class ModelComparison:
             recall = recall_score(self.y_test, y_pred)
             f1 = f1_score(self.y_test, y_pred)
             
-            # Cross-validation score
-            cv_scores = cross_val_score(model, X_train, self.y_train, cv=5, scoring='accuracy')
+            # Cross-validation score (use original format for consistency)
+            cv_train = X_train if model_name != 'LightGBM' else self.X_train.values
+            cv_scores = cross_val_score(model, cv_train, self.y_train, cv=5, scoring='accuracy')
             cv_mean = cv_scores.mean()
             cv_std = cv_scores.std()
             
