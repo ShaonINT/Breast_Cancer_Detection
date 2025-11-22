@@ -5,7 +5,7 @@ Compares multiple machine learning models to find the best performer.
 
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
@@ -176,6 +176,19 @@ class ModelComparison:
             recall = recall_score(self.y_test, y_pred)
             f1 = f1_score(self.y_test, y_pred)
             
+            # Confusion Matrix
+            cm = confusion_matrix(self.y_test, y_pred)
+            tn, fp, fn, tp = cm.ravel()
+            
+            # Additional metrics from confusion matrix
+            specificity = tn / (tn + fp) if (tn + fp) > 0 else 0  # True Negative Rate
+            fnr = fn / (fn + tp) if (fn + tp) > 0 else 0  # False Negative Rate (Critical for medical diagnosis)
+            fpr = fp / (fp + tn) if (fp + tn) > 0 else 0  # False Positive Rate
+            
+            # Composite score: Weighted combination of F1, Accuracy, and low False Negative Rate
+            # For medical diagnosis, minimizing false negatives is critical
+            composite_score = (0.4 * f1) + (0.3 * accuracy) + (0.3 * (1 - fnr))
+            
             # Cross-validation score (use original format for consistency)
             cv_train = X_train if model_name != 'LightGBM' else self.X_train.values
             cv_scores = cross_val_score(model, cv_train, self.y_train, cv=5, scoring='accuracy')
@@ -190,26 +203,48 @@ class ModelComparison:
                 'f1_score': f1,
                 'cv_mean': cv_mean,
                 'cv_std': cv_std,
+                'confusion_matrix': cm,
+                'tn': tn, 'fp': fp, 'fn': fn, 'tp': tp,
+                'specificity': specificity,
+                'fnr': fnr,
+                'fpr': fpr,
+                'composite_score': composite_score,
                 'model': model,
                 'y_pred': y_pred,
-                'y_pred_proba': y_pred_proba
+                'y_pred_proba': y_pred_proba,
+                'X_train_format': X_train,
+                'uses_scaled': model_name in ['SVM', 'Neural Network']
             }
             
             # Print results
-            print(f"Accuracy:  {accuracy:.4f}")
-            print(f"Precision: {precision:.4f}")
-            print(f"Recall:    {recall:.4f}")
-            print(f"F1-Score:  {f1:.4f}")
-            print(f"CV Score:  {cv_mean:.4f} (+/- {cv_std * 2:.4f})")
+            print(f"Accuracy:     {accuracy:.4f}")
+            print(f"Precision:    {precision:.4f}")
+            print(f"Recall:       {recall:.4f}")
+            print(f"F1-Score:     {f1:.4f}")
+            print(f"CV Score:     {cv_mean:.4f} (+/- {cv_std * 2:.4f})")
+            print(f"\nConfusion Matrix:")
+            print(f"                Predicted")
+            print(f"              Benign  Malignant")
+            print(f"Actual Benign    {tn:4d}      {fp:4d}")
+            print(f"      Malignant  {fn:4d}      {tp:4d}")
+            print(f"\nFalse Negative Rate (FNR): {fnr:.4f} (Lower is better)")
+            print(f"Specificity (TNR):         {specificity:.4f}")
+            print(f"Composite Score:           {composite_score:.4f}")
             
-            # Update best model
-            if f1 > best_score:
-                best_score = f1
+            # Update best model based on composite score (considers F1, Accuracy, and FNR)
+            if composite_score > best_score:
+                best_score = composite_score
                 self.best_model = model
                 self.best_model_name = model_name
         
         print("\n" + "=" * 80)
-        print(f"\nBest Model: {self.best_model_name} (F1-Score: {best_score:.4f})")
+        if self.best_model_name:
+            best_metrics = self.results[self.best_model_name]
+            print(f"\nBest Model: {self.best_model_name}")
+            print(f"  F1-Score:       {best_metrics['f1_score']:.4f}")
+            print(f"  Accuracy:       {best_metrics['accuracy']:.4f}")
+            print(f"  False Neg Rate: {best_metrics['fnr']:.4f}")
+            print(f"  Composite Score: {best_metrics['composite_score']:.4f}")
         print()
         
         return self
@@ -219,21 +254,23 @@ class ModelComparison:
         print("\n" + "=" * 80)
         print("MODEL COMPARISON TABLE")
         print("=" * 80)
-        print(f"{'Model':<20} {'Accuracy':<12} {'Precision':<12} {'Recall':<12} {'F1-Score':<12} {'CV Score':<12}")
+        print(f"{'Model':<20} {'Accuracy':<12} {'F1-Score':<12} {'FNR':<12} {'Composite':<12} {'CV Score':<12}")
         print("-" * 80)
         
-        # Sort by F1-score
+        # Sort by composite score (considers F1, Accuracy, and False Negative Rate)
         sorted_results = sorted(
             self.results.items(),
-            key=lambda x: x[1]['f1_score'],
+            key=lambda x: x[1]['composite_score'],
             reverse=True
         )
         
         for model_name, metrics in sorted_results:
-            print(f"{model_name:<20} {metrics['accuracy']:<12.4f} {metrics['precision']:<12.4f} "
-                  f"{metrics['recall']:<12.4f} {metrics['f1_score']:<12.4f} {metrics['cv_mean']:<12.4f}")
+            print(f"{model_name:<20} {metrics['accuracy']:<12.4f} {metrics['f1_score']:<12.4f} "
+                  f"{metrics['fnr']:<12.4f} {metrics['composite_score']:<12.4f} {metrics['cv_mean']:<12.4f}")
         
         print("=" * 80)
+        print("\nNote: Composite Score = 0.4*F1 + 0.3*Accuracy + 0.3*(1-FNR)")
+        print("      Lower FNR (False Negative Rate) is critical for medical diagnosis")
         print()
     
     def print_best_model_details(self):
@@ -245,18 +282,32 @@ class ModelComparison:
             
             metrics = self.results[self.best_model_name]
             y_pred = metrics['y_pred']
+            cm = metrics['confusion_matrix']
             
             print("\nClassification Report:")
             print(classification_report(self.y_test, y_pred, 
                                       target_names=['Benign (B)', 'Malignant (M)']))
             
             print("\nConfusion Matrix:")
-            cm = confusion_matrix(self.y_test, y_pred)
-            print(cm)
-            print(f"\nTrue Negatives (TN): {cm[0][0]}")
-            print(f"False Positives (FP): {cm[0][1]}")
-            print(f"False Negatives (FN): {cm[1][0]}")
-            print(f"True Positives (TP): {cm[1][1]}")
+            print(f"                Predicted")
+            print(f"              Benign  Malignant")
+            print(f"Actual Benign    {metrics['tn']:4d}      {metrics['fp']:4d}")
+            print(f"      Malignant  {metrics['fn']:4d}      {metrics['tp']:4d}")
+            
+            print(f"\nKey Metrics:")
+            print(f"  True Negatives (TN):  {metrics['tn']:4d}  (Correctly identified benign)")
+            print(f"  False Positives (FP): {metrics['fp']:4d}  (Benign classified as malignant)")
+            print(f"  False Negatives (FN): {metrics['fn']:4d}  (Malignant missed - CRITICAL)")
+            print(f"  True Positives (TP):  {metrics['tp']:4d}  (Correctly identified malignant)")
+            
+            print(f"\nPerformance Metrics:")
+            print(f"  Accuracy:       {metrics['accuracy']:.4f}")
+            print(f"  Precision:      {metrics['precision']:.4f}")
+            print(f"  Recall:         {metrics['recall']:.4f}  (Sensitivity - ability to catch malignant)")
+            print(f"  F1-Score:       {metrics['f1_score']:.4f}")
+            print(f"  Specificity:    {metrics['specificity']:.4f}  (Ability to identify benign)")
+            print(f"  False Neg Rate: {metrics['fnr']:.4f}  (Lower is better for medical diagnosis)")
+            print(f"  False Pos Rate: {metrics['fpr']:.4f}")
             print("=" * 80)
             print()
     
@@ -291,6 +342,175 @@ class ModelComparison:
         
         return self
     
+    def tune_best_model(self):
+        """Perform hyperparameter tuning on the best model to improve performance."""
+        if not self.best_model_name:
+            print("No best model selected. Skipping hyperparameter tuning.")
+            return self
+        
+        print("\n" + "=" * 80)
+        print(f"HYPERPARAMETER TUNING FOR: {self.best_model_name}")
+        print("=" * 80)
+        print("\nPerforming grid search to find optimal hyperparameters...")
+        print("This may take several minutes...\n")
+        
+        best_metrics = self.results[self.best_model_name]
+        uses_scaled = best_metrics['uses_scaled']
+        X_train_tune = self.X_train_scaled if uses_scaled else self.X_train
+        
+        # Handle LightGBM separately
+        if self.best_model_name == 'LightGBM':
+            X_train_tune = self.X_train.values
+        
+        # Define parameter grids for each model type
+        param_grids = {
+            'Random Forest': {
+                'n_estimators': [100, 200, 300],
+                'max_depth': [10, 15, 20, None],
+                'min_samples_split': [2, 5, 10],
+                'min_samples_leaf': [1, 2, 4]
+            },
+            'XGBoost': {
+                'n_estimators': [100, 200, 300],
+                'max_depth': [4, 6, 8],
+                'learning_rate': [0.01, 0.1, 0.2],
+                'subsample': [0.8, 1.0],
+                'colsample_bytree': [0.8, 1.0]
+            },
+            'CatBoost': {
+                'iterations': [100, 200, 300],
+                'depth': [4, 6, 8],
+                'learning_rate': [0.01, 0.1, 0.2],
+                'l2_leaf_reg': [1, 3, 5]
+            },
+            'LightGBM': {
+                'n_estimators': [100, 200, 300],
+                'max_depth': [4, 6, 8],
+                'learning_rate': [0.01, 0.1, 0.2],
+                'subsample': [0.8, 1.0],
+                'colsample_bytree': [0.8, 1.0]
+            },
+            'SVM': {
+                'C': [0.1, 1, 10, 100],
+                'gamma': ['scale', 'auto', 0.001, 0.01, 0.1],
+                'kernel': ['rbf', 'poly']
+            },
+            'Neural Network': {
+                'hidden_layer_sizes': [(50,), (100,), (100, 50), (150, 100), (200, 100, 50)],
+                'alpha': [0.0001, 0.001, 0.01],
+                'learning_rate_init': [0.001, 0.01, 0.1],
+                'max_iter': [300, 500, 1000]
+            }
+        }
+        
+        # Get base model and parameter grid
+        param_grid = param_grids.get(self.best_model_name)
+        if not param_grid:
+            print(f"No parameter grid defined for {self.best_model_name}. Skipping tuning.")
+            return self
+        
+        # Create base model with same configuration
+        if self.best_model_name == 'Random Forest':
+            base_model = RandomForestClassifier(random_state=42, n_jobs=-1)
+        elif self.best_model_name == 'XGBoost':
+            base_model = xgb.XGBClassifier(random_state=42, eval_metric='logloss')
+        elif self.best_model_name == 'CatBoost':
+            base_model = cb.CatBoostClassifier(random_state=42, verbose=False)
+        elif self.best_model_name == 'LightGBM':
+            base_model = lgb.LGBMClassifier(random_state=42, verbose=-1)
+        elif self.best_model_name == 'SVM':
+            base_model = SVC(probability=True, random_state=42)
+        elif self.best_model_name == 'Neural Network':
+            base_model = MLPClassifier(random_state=42, early_stopping=True, validation_fraction=0.1)
+        
+        # Perform GridSearchCV with F1-score as primary metric (important for medical diagnosis)
+        # Use 3-fold CV to speed up the process while still getting good results
+        grid_search = GridSearchCV(
+            base_model,
+            param_grid,
+            cv=3,
+            scoring='f1',
+            n_jobs=-1,
+            verbose=1
+        )
+        
+        grid_search.fit(X_train_tune, self.y_train)
+        
+        # Get best tuned model
+        tuned_model = grid_search.best_estimator_
+        best_params = grid_search.best_params_
+        
+        print(f"\nBest Parameters Found:")
+        for param, value in best_params.items():
+            print(f"  {param}: {value}")
+        print(f"\nBest CV F1-Score: {grid_search.best_score_:.4f}")
+        
+        # Evaluate tuned model on test set
+        X_test_tune = self.X_test_scaled if uses_scaled else self.X_test
+        if self.best_model_name == 'LightGBM':
+            X_test_tune = self.X_test.values
+        
+        y_pred_tuned = tuned_model.predict(X_test_tune)
+        
+        # Calculate metrics for tuned model
+        accuracy_tuned = accuracy_score(self.y_test, y_pred_tuned)
+        precision_tuned = precision_score(self.y_test, y_pred_tuned)
+        recall_tuned = recall_score(self.y_test, y_pred_tuned)
+        f1_tuned = f1_score(self.y_test, y_pred_tuned)
+        cm_tuned = confusion_matrix(self.y_test, y_pred_tuned)
+        tn_tuned, fp_tuned, fn_tuned, tp_tuned = cm_tuned.ravel()
+        
+        fnr_tuned = fn_tuned / (fn_tuned + tp_tuned) if (fn_tuned + tp_tuned) > 0 else 0
+        composite_tuned = (0.4 * f1_tuned) + (0.3 * accuracy_tuned) + (0.3 * (1 - fnr_tuned))
+        
+        # Compare with original model
+        print("\n" + "-" * 80)
+        print("COMPARISON: Before vs After Tuning")
+        print("-" * 80)
+        print(f"{'Metric':<25} {'Before':<15} {'After':<15} {'Improvement':<15}")
+        print("-" * 80)
+        
+        metrics_before = best_metrics
+        accuracy_improvement = accuracy_tuned - metrics_before['accuracy']
+        f1_improvement = f1_tuned - metrics_before['f1_score']
+        fnr_improvement = metrics_before['fnr'] - fnr_tuned  # Lower FNR is better
+        composite_improvement = composite_tuned - metrics_before['composite_score']
+        
+        print(f"{'Accuracy':<25} {metrics_before['accuracy']:<15.4f} {accuracy_tuned:<15.4f} {accuracy_improvement:+.4f}")
+        print(f"{'F1-Score':<25} {metrics_before['f1_score']:<15.4f} {f1_tuned:<15.4f} {f1_improvement:+.4f}")
+        print(f"{'False Neg Rate':<25} {metrics_before['fnr']:<15.4f} {fnr_tuned:<15.4f} {fnr_improvement:+.4f}")
+        print(f"{'Composite Score':<25} {metrics_before['composite_score']:<15.4f} {composite_tuned:<15.4f} {composite_improvement:+.4f}")
+        print("-" * 80)
+        
+        # Decide whether to use tuned model
+        if composite_tuned >= metrics_before['composite_score']:
+            print(f"\n✓ Tuned model performs better or equal. Updating best model...")
+            self.best_model = tuned_model
+            self.results[self.best_model_name]['model'] = tuned_model
+            self.results[self.best_model_name]['accuracy'] = accuracy_tuned
+            self.results[self.best_model_name]['precision'] = precision_tuned
+            self.results[self.best_model_name]['recall'] = recall_tuned
+            self.results[self.best_model_name]['f1_score'] = f1_tuned
+            self.results[self.best_model_name]['confusion_matrix'] = cm_tuned
+            self.results[self.best_model_name]['tn'] = tn_tuned
+            self.results[self.best_model_name]['fp'] = fp_tuned
+            self.results[self.best_model_name]['fn'] = fn_tuned
+            self.results[self.best_model_name]['tp'] = tp_tuned
+            self.results[self.best_model_name]['fnr'] = fnr_tuned
+            self.results[self.best_model_name]['composite_score'] = composite_tuned
+            self.results[self.best_model_name]['best_params'] = best_params
+            print(f"  Accuracy improvement: {accuracy_improvement:+.4f}")
+            print(f"  F1-Score improvement: {f1_improvement:+.4f}")
+            print(f"  FNR improvement: {fnr_improvement:+.4f} (Lower is better)")
+        else:
+            print(f"\n✗ Original model performs better. Keeping original model.")
+            print(f"  Tuned model had lower composite score by {abs(composite_improvement):.4f}")
+        
+        print("=" * 80)
+        print()
+        
+        return self
+    
     def run_complete_pipeline(self):
         """Run the complete model comparison pipeline."""
         print("=" * 80)
@@ -303,6 +523,8 @@ class ModelComparison:
         self.train_and_evaluate_models()
         self.print_comparison_table()
         self.print_best_model_details()
+        self.tune_best_model()
+        self.print_best_model_details()  # Print again after tuning
         self.save_best_model()
         
         print("=" * 80)
