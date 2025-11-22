@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY . .
 
+# Train the model during Docker build (for Render/Docker deployments)
+RUN python train_models.py
+
 # Expose port
 EXPOSE 8000
 
