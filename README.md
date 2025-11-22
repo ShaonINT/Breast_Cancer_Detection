@@ -526,37 +526,76 @@ See [DEPLOYMENT_HOSTING.md](./DEPLOYMENT_HOSTING.md) for detailed instructions.
 
 ## 📊 Dataset Information
 
-### Source
-The dataset contains features computed from digitized images of fine needle aspirates (FNA) of breast masses.
+### Dataset Source
 
-### Features
-- **Total Features**: 30 numerical features
-- **Samples**: 569 instances
-- **Categories**:
-  - **Mean Features** (10): Average measurements across all cells
-  - **Standard Error Features** (10): Variation in measurements
-  - **Worst Features** (10): Most abnormal/severe measurements
+**Kaggle Dataset**: [Breast Cancer Dataset](https://www.kaggle.com/datasets/wasiqaliyasir/breast-cancer-dataset)
 
-### Target Variable
+The dataset is available on Kaggle and is based on the Wisconsin Breast Cancer Database (WBCD). This dataset is widely used in machine learning research for breast cancer classification tasks.
 
-- **B (Benign)**: Non-cancerous tissue (357 cases)
-- **M (Malignant)**: Cancerous tissue (212 cases)
+### Dataset Description
+
+The dataset contains features computed from digitized images of **Fine Needle Aspirate (FNA)** samples of breast masses. FNA is a diagnostic procedure where a thin needle is used to extract a small sample of cells from a breast mass for microscopic examination.
+
+**Key Characteristics:**
+- **Source**: Features are derived from images of cell nuclei obtained through FNA procedures
+- **Purpose**: Classify breast masses as benign (non-cancerous) or malignant (cancerous)
+- **Medical Context**: This is a binary classification problem critical for early breast cancer detection
+- **Data Quality**: Well-curated dataset with minimal missing values
+
+### Dataset Statistics
+
+- **Total Samples**: 569 instances
+- **Features**: 30 numerical features
+- **Target Distribution**:
+  - **B (Benign)**: 357 cases (62.7%) - Non-cancerous tissue
+  - **M (Malignant)**: 212 cases (37.3%) - Cancerous tissue
+- **Class Imbalance**: Slight imbalance toward benign cases (typical in medical datasets)
+
+### Feature Categories
+
+The 30 features are organized into three categories, each measuring 10 different characteristics of cell nuclei:
+
+1. **Mean Features** (10 features): Average measurements across all cells in the image
+   - Provides overall characterization of cell nuclei
+
+2. **Standard Error Features** (10 features): Standard error (variation) in measurements
+   - Indicates consistency and variability across cells
+
+3. **Worst Features** (10 features): Largest (worst/most abnormal) measurements found
+   - Captures the most severe abnormalities in cell nuclei
 
 ### Feature Descriptions
 
-Each feature measures different aspects of cell nuclei:
-- **Radius**: Distance from center to perimeter
-- **Texture**: Variation in gray-scale values
-- **Perimeter**: Distance around the boundary
-- **Area**: Size of the cell nucleus
-- **Smoothness**: Local variation in radius lengths
-- **Compactness**: Perimeter² / (Area - 1)
-- **Concavity**: Severity of concave portions
-- **Concave Points**: Number of concave portions
-- **Symmetry**: How symmetrical the cell is
-- **Fractal Dimension**: Complexity of the boundary
+Each of the 10 measured characteristics provides different insights into cell structure:
 
-For detailed explanations, hover over the **?** icons in the web interface!
+- **Radius**: Distance from center to points on the perimeter (size indicator)
+- **Texture**: Standard deviation of gray-scale values (surface appearance variation)
+- **Perimeter**: Distance around the boundary of the cell nucleus
+- **Area**: Size of the cell nucleus (often larger in malignant cells)
+- **Smoothness**: Local variation in radius lengths (boundary smoothness)
+- **Compactness**: Perimeter² / (Area - 1) (how circular/compact the shape is)
+- **Concavity**: Severity of concave portions of the contour (indentations)
+- **Concave Points**: Number of concave portions (frequency of indentations)
+- **Symmetry**: How symmetrical the cell nucleus is (normal cells are more symmetrical)
+- **Fractal Dimension**: Complexity of the boundary ("coastline approximation")
+
+### Clinical Significance
+
+This dataset is particularly valuable because:
+- **Early Detection**: Enables classification based on cell characteristics visible in FNA samples
+- **Non-Invasive**: FNA is less invasive than surgical biopsies
+- **Fast Results**: Can provide quicker preliminary diagnosis
+- **Pattern Recognition**: Machine learning models can identify subtle patterns not easily visible to the human eye
+
+### Data Preprocessing
+
+In this project, the dataset is preprocessed by:
+- Normalizing feature names (removing spaces)
+- Encoding target variable (M=1, B=0)
+- Handling missing values (if any)
+- Splitting into training (80%) and testing (20%) sets with stratification
+
+**Note**: For detailed explanations of each feature, hover over the **?** icons in the web interface!
 
 ---
 
@@ -750,9 +789,10 @@ This project is for **educational and research purposes only**.
 
 ## 🙏 Acknowledgments
 
-- Dataset: Wisconsin Breast Cancer Dataset
-- Libraries: scikit-learn, XGBoost, CatBoost, LightGBM, FastAPI
-- Community: Open source machine learning community
+- **Dataset Source**: [Breast Cancer Dataset on Kaggle](https://www.kaggle.com/datasets/wasiqaliyasir/breast-cancer-dataset) by [wasiqaliyasir](https://www.kaggle.com/wasiqaliyasir)
+- **Original Dataset**: Wisconsin Breast Cancer Database (WBCD)
+- **Libraries**: scikit-learn, XGBoost, CatBoost, LightGBM, FastAPI
+- **Community**: Open source machine learning community
 
 ---
 
