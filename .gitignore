@@ -43,14 +43,15 @@ venv.bak/
 *.ipynb
 
 # Model files (can be regenerated)
-*.pkl
-*.h5
-*.hdf5
+# Temporarily allowing model files for Render deployment
+# *.pkl
+# *.h5
+# *.hdf5
 *.joblib
 *.model
-best_model.pkl
-scaler.pkl
-model_metadata.pkl
+# best_model.pkl
+# scaler.pkl
+# model_metadata.pkl
 
 # Data files (optional - remove if you want to commit dataset)
 # *.csv
