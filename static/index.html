@@ -324,7 +324,7 @@
         .info-box p {
             color: #555;
             line-height: 1.6;
-            margin: 5px 0;
+            margin: 8px 0;
         }
 
         .info-box ul {
@@ -334,7 +334,21 @@
         }
 
         .info-box li {
-            margin: 5px 0;
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .disclaimer strong {
+            color: #856404;
         }
     </style>
 </head>
@@ -349,6 +363,15 @@
             <div class="info-box">
                 <h3>📋 Understanding the Measurements</h3>
                 <p><strong>What are these measurements?</strong> These values come from analyzing cell nuclei images from breast tissue samples. Each measurement describes different aspects of the cell's size, shape, and texture.</p>
+                
+                <p><strong>📊 Understanding the Results:</strong></p>
+                <ul>
+                    <li><strong>Benign (B)</strong>: <span style="color: #51cf66; font-weight: bold;">Non-cancerous</span> - The cells appear normal and healthy. This is good news! The tissue is not cancerous.</li>
+                    <li><strong>Malignant (M)</strong>: <span style="color: #ff6b6b; font-weight: bold;">Cancerous</span> - The cells show abnormalities that may indicate cancer. This requires medical attention and further testing by a doctor.</li>
+                </ul>
+                
+                <p><strong>⚠️ Important Medical Disclaimer:</strong> This tool is for educational purposes only. The results are predictions based on machine learning and should NOT replace professional medical diagnosis. Always consult with a qualified healthcare provider for accurate diagnosis and treatment decisions.</p>
+                
                 <p><strong>How to use:</strong></p>
                 <ul>
                     <li>Hover over the <strong>?</strong> icon next to any field to see what it means</li>
@@ -1066,10 +1089,27 @@
                 const probability = (result.probability * 100).toFixed(2);
                 const confidence = result.confidence;
 
+                // Add explanation based on result
+                let explanation = '';
+                if (isMalignant) {
+                    explanation = '<div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 6px;"><strong>What this means:</strong> The cells show characteristics that may indicate cancer. <strong>Please consult a healthcare professional</strong> for proper medical evaluation and diagnosis.</div>';
+                } else {
+                    explanation = '<div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 6px;"><strong>What this means:</strong> The cells appear normal and healthy (non-cancerous). However, <strong>always consult with a healthcare provider</strong> for professional medical advice.</div>';
+                }
+
                 resultDetails.innerHTML = `
                     <div><strong>Diagnosis:</strong> ${predictionText}</div>
-                    <div><strong>Malignant Probability:</strong> ${probability}%</div>
+                    <div style="margin-top: 10px;">
+                        <strong>What is ${predictionLetter === 'M' ? 'Malignant' : 'Benign'}?</strong><br>
+                        <span style="font-size: 0.9em;">
+                            ${predictionLetter === 'M' 
+                                ? '<span style="color: #ffebee;">Malignant (M)</span> means <strong>cancerous</strong> - cells show abnormalities that may indicate cancer.' 
+                                : '<span style="color: #e8f5e9;">Benign (B)</span> means <strong>non-cancerous</strong> - cells appear normal and healthy.'}
+                        </span>
+                    </div>
+                    <div style="margin-top: 10px;"><strong>Malignant Probability:</strong> ${probability}%</div>
                     <div><strong>Confidence:</strong> ${confidence}</div>
+                    ${explanation}
                 `;
 
                 // Show result section
