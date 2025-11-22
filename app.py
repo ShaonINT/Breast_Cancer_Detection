@@ -211,6 +211,47 @@ async def health_check():
     }
 
 
+@app.get("/example", tags=["Prediction"])
+async def get_random_example():
+    """
+    Get a random example from the dataset.
+    Returns a random sample that can be used for testing predictions.
+    """
+    import random
+    import pandas as pd
+    
+    try:
+        # Load dataset
+        df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'Breast_cancer_dataset.csv'))
+        
+        # Drop id and diagnosis columns
+        if 'id' in df.columns:
+            df = df.drop('id', axis=1)
+        if 'diagnosis' in df.columns:
+            df = df.drop('diagnosis', axis=1)
+        
+        # Normalize column names (replace spaces with underscores)
+        df.columns = [col.replace(' ', '_') for col in df.columns]
+        
+        # Drop unnamed columns
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+        
+        # Get a random row
+        random_row = df.sample(n=1).iloc[0]
+        
+        # Convert to dictionary with proper naming (Pydantic format)
+        example_dict = {}
+        for col in df.columns:
+            # Convert CSV column names to Pydantic field names
+            pydantic_name = col.replace(' ', '_')
+            example_dict[pydantic_name] = float(random_row[col])
+        
+        return example_dict
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading example: {str(e)}")
+
+
 @app.post("/predict", response_model=PredictionOutput, tags=["Prediction"])
 async def predict(input_data: PredictionInput):
     """
